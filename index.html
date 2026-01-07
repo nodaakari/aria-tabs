@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ja" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>aria-tabs.js</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Tailwind CSSのコンフィグでaria-selectedバリアントを追加
+  tailwind.config = {
+    theme: {
+      extend: {}
+    },
+    plugins: [
+      function({ addVariant }) {
+        addVariant('aria-selected', '&[aria-selected="true"]');
+      }
+    ]
+  }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+</head>
+
+<body class="bg-white text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-white">
+    <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+        <div class="md:flex md:items-center md:gap-12">
+          <a class="block text-teal-600" href="/">
+            <span class="sr-only">Home</span>
+            <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">aria-tabs.js</h1>
+          </a>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="sm:flex sm:gap-4">
+            <a
+              href="https://github.com/nodaakari/aria-tabs" target="_blank" rel="noopener noreferrer"
+              class="rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600"
+              aria-label="View source on GitHub"
+            >
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.378.203 2.398.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.848-2.338 4.695-4.566 4.943.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd" /></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="bg-gray-50 py-16">
+      <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold text-gray-900 sm:text-4xl">アクセシブルなタブを、驚くほど簡単に。</h2>
+        <p class="mt-4 text-gray-500">
+          `aria-tabs.js` は、WAI-ARIA仕様に準拠した、軽量で柔軟なタブコンポーネントを実装するためのJavaScriptライブラリです。
+        </p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+          <a class="block w-full rounded bg-teal-600 px-12 py-3 text-sm font-medium text-white shadow hover:bg-teal-700 focus:outline-none focus:ring active:bg-teal-500 sm:w-auto" href="https://github.com/nodaakari/aria-tabs" target="_blank" rel="noopener noreferrer">
+            GitHubで見る
+          </a>
+        </div>
+        <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-900">アクセシビリティ</h3>
+            <p class="mt-2 text-sm text-gray-600">
+              WAI-ARIAの仕様（<code>role</code>, <code>aria-selected</code>, <code>aria-controls</code>等）に沿った属性管理を自動で行います。
+            </p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-900">ネスト & 複数ボタン連動</h3>
+            <p class="mt-2 text-sm text-gray-600">
+              タブコンポーネントを入れ子にしても各階層が完全に独立して動作。同じパネルIDを持つボタンも一括で制御できます。
+            </p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-900">URLパラメータ連携</h3>
+            <p class="mt-2 text-sm text-gray-600">
+              URLのクエリパラメータから初期タブを表示したり、タブの切り替えと連動してURLを更新できます。
+            </p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-900">便利なAPI</h3>
+            <p class="mt-2 text-sm text-gray-600">
+              <code>setup()</code>での一括初期化や、Event・Callback機能で柔軟な制御が可能です。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="py-16">
+      <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl">
+        <h3 class="text-2xl font-bold text-center mb-8">DEMO</h3>
+
+        <!-- Demo 1: Basic Tabs -->
+        <div class="mb-12">
+          <h4 class="text-lg font-medium mb-4">基本的なタブ</h4>
+          <div class="js-tab-container rounded-lg border border-gray-200 p-4">
+            <div role="tablist" class="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500">
+              <button role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">タブ 1</button>
+              <button role="tab" id="tab-2" aria-controls="panel-2" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">タブ 2</button>
+              <button role="tab" id="tab-3" aria-controls="panel-3" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">タブ 3</button>
+            </div>
+            <div role="tabpanel" id="panel-1" class="mt-4 p-4 rounded-md border border-gray-200">
+              <p>パネル 1 のコンテンツです。</p>
+            </div>
+            <div role="tabpanel" id="panel-2" hidden class="mt-4 p-4 rounded-md border border-gray-200">
+              <p>パネル 2 のコンテンツです。</p>
+            </div>
+            <div role="tabpanel" id="panel-3" hidden class="mt-4 p-4 rounded-md border border-gray-200">
+              <p>パネル 3 のコンテンツです。</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Demo 2: Nested Tabs -->
+        <div class="mb-12">
+          <h4 class="text-lg font-medium mb-4">入れ子（ネスト）の例</h4>
+          <div class="js-tab-container rounded-lg border border-gray-200 p-4">
+            <div role="tablist" class="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500">
+              <button role="tab" id="parent-tab1" aria-controls="parent-panel1" aria-selected="true" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">親タブ1</button>
+              <button role="tab" id="parent-tab2" aria-controls="parent-panel2" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">親タブ2</button>
+            </div>
+            <div role="tabpanel" id="parent-panel1" class="mt-4 p-4 rounded-md border border-gray-200">
+              <p class="mb-4">親パネル1のコンテンツ。</p>
+              <div class="js-tab-container rounded-lg border border-gray-200 p-4 bg-gray-50">
+                <div role="tablist" class="inline-flex h-10 items-center justify-center rounded-md bg-white p-1 text-gray-500 border">
+                  <button role="tab" id="child-tab1" aria-controls="child-panel1" aria-selected="true" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-gray-100 aria-selected:text-gray-900 aria-selected:shadow-sm">子タブ1</button>
+                  <button role="tab" id="child-tab2" aria-controls="child-panel2" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-gray-100 aria-selected:text-gray-900 aria-selected:shadow-sm">子タブ2</button>
+                </div>
+                <div role="tabpanel" id="child-panel1" class="mt-4 p-4 rounded-md border border-gray-200 bg-white">子パネル1のコンテンツ</div>
+                <div role="tabpanel" id="child-panel2" hidden class="mt-4 p-4 rounded-md border border-gray-200 bg-white">子パネル2のコンテンツ</div>
+              </div>
+            </div>
+            <div role="tabpanel" id="parent-panel2" hidden class="mt-4 p-4 rounded-md border border-gray-200">
+              <p>親パネル2のコンテンツ。</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Demo 3: Synced Tabs -->
+        <div>
+          <h4 class="text-lg font-medium mb-4">上下にあるタブが連動する例</h4>
+          <div class="js-tab-container rounded-lg border border-gray-200 p-4">
+            <div role="tablist" class="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 mb-4">
+              <button id="tab-synced-1-top" role="tab" aria-controls="panel-synced-1" aria-selected="true" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">地域から探す</button>
+              <button id="tab-synced-2-top" role="tab" aria-controls="panel-synced-2" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">条件から探す</button>
+            </div>
+
+            <div id="panel-synced-1" role="tabpanel" class="p-4 rounded-md border border-gray-200">地域パネルの内容</div>
+            <div id="panel-synced-2" role="tabpanel" hidden class="p-4 rounded-md border border-gray-200">条件パネルの内容</div>
+
+            <div role="tablist" class="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 mt-4">
+              <button id="tab-synced-1-bottom" role="tab" aria-controls="panel-synced-1" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">地域から探す</button>
+              <button id="tab-synced-2-bottom" role="tab" aria-controls="panel-synced-2" class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-selected:bg-white aria-selected:text-gray-900 aria-selected:shadow-sm">条件から探す</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HTML Structure Section -->
+    <section id="html-structure" class="py-16 bg-gray-50">
+      <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl">
+          <h2 class="text-3xl font-bold text-center mb-8">HTML構造</h2>
+          <p class="text-gray-600 mb-6">基本的なHTML構造は、WAI-ARIAの仕様に沿って記述します。</p>
+          <ul class="list-disc list-inside space-y-2 mb-6 text-gray-600">
+            <li>タブのリスト全体を <code class="text-sm bg-gray-200 p-1 rounded">role="tablist"</code> を持つ要素で囲みます。</li>
+            <li>各タブ要素に <code class="text-sm bg-gray-200 p-1 rounded">role="tab"</code> と <code class="text-sm bg-gray-200 p-1 rounded">id</code> を指定し、対応するパネルのIDを <code class="text-sm bg-gray-200 p-1 rounded">aria-controls</code> 属性に指定します。</li>
+            <li>各パネル要素に <code class="text-sm bg-gray-200 p-1 rounded">role="tabpanel"</code> と <code class="text-sm bg-gray-200 p-1 rounded">id</code> を指定します。</li>
+            <li>これら全体を囲むコンテナ要素に、JavaScriptが初期化の起点として使用するクラス（デフォルト: <code class="text-sm bg-gray-200 p-1 rounded">.js-tab-container</code>）を付与します。</li>
+          </ul>
+          <div class="mt-6">
+            <pre class="text-sm"><code class="language-html hljs rounded-lg">&lt;div class="js-tab-container"&gt;
+  &lt;div role="tablist"&gt;
+    &lt;button role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true"&gt;タブ 1&lt;/button&gt;
+    &lt;button role="tab" id="tab-2" aria-controls="panel-2"&gt;タブ 2&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div role="tabpanel" id="panel-1"&gt;
+    &lt;p&gt;パネル 1 のコンテンツです。&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div role="tabpanel" id="panel-2" hidden&gt;
+    &lt;p&gt;パネル 2 のコンテンツです。&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Usage Section -->
+    <section id="usage" class="py-16">
+      <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl">
+          <h2 class="text-3xl font-bold text-center mb-12">使い方</h2>
+          
+          <h3 class="text-2xl font-bold mb-4">1. セットアップ</h3>
+          <p class="text-gray-600"><code>aria-tabs.js</code> を読み込み、<code>AriaTabs.setup()</code> を呼び出すだけで、対象のタブコンポーネントが初期化されます。</p>
+          
+          <h4 class="font-bold mt-6 text-lg">HTML</h4>
+          <pre class="mt-2 text-sm"><code class="language-html hljs rounded-lg">&lt;div class="js-tab-container"&gt;
+  &lt;!-- タブとパネルのHTML構造 --&gt;
+&lt;/div&gt;
+
+&lt;script src="./src/aria-tabs.js"&gt;&lt;/script&gt;</code></pre>
+          
+          <h4 class="font-bold mt-6 text-lg">JavaScript</h4>
+          <pre class="mt-2 text-sm"><code class="language-javascript hljs rounded-lg">const myTab = AriaTabs.setup();</code></pre>
+          <p class="mt-4 text-gray-600"><code>setup</code> メソッドは、見つかったすべてのコンテナの <code>AriaTabs</code> インスタンスを含む特殊な配列を返します。この配列には、後述する便利なメソッドが追加されています。</p>
+
+          <h3 class="text-2xl font-bold mt-12 mb-4">2. オプションの指定</h3>
+          <ul class="list-disc list-inside space-y-2 text-gray-600">
+            <li><code>setup</code> メソッドの第1引数にはCSSセレクタを指定できます。（デフォルト: <code>.js-tab-container</code>）</li>
+            <li>第2引数にオプションオブジェクトを渡すことができます。</li>
+          </ul>
+          <pre class="mt-4 text-sm"><code class="language-javascript hljs rounded-lg">AriaTabs.setup('.my-custom-tabs', {
+  updateUrl: true,
+  toggleMethod: 'aria-hidden',
+  callback: {
+    onTabChange: (activatedTab) => {
+      console.log(`Activated: ${activatedTab.id}`);
+    }
+  }
+});</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- URL Parameter Section -->
+    <section id="url-parameter" class="py-16 bg-gray-50">
+      <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl">
+          <h2 class="text-3xl font-bold text-center mb-12">URLパラメータ連携</h2>
+          <p class="text-gray-600">ページ読み込み時に特定のタブを開いたり、現在のタブ状態をURLに反映させたりする機能です。（例: <code>?tab=tab-2</code>）</p>
+
+          <h3 class="text-2xl font-bold mt-8 mb-4">初期表示の優先順位</h3>
+          <p class="text-gray-600">ページロード時、以下の優先順位で表示するタブを決定します。</p>
+          <ol class="list-decimal list-inside space-y-2 mt-4 text-gray-600">
+            <li>URLのクエリパラメータ</li>
+            <li>HTMLで <code>aria-selected="true"</code> が設定されたタブ</li>
+            <li>（上記いずれもない場合）最初のタブ</li>
+          </ol>
+          <p class="mt-4 text-gray-600"><strong>複数コンポーネントの共存</strong>: ページ内に複数のタブコンポーネントが存在し、URLパラメータにそれぞれのタブIDが含まれている場合でも、各コンポーネントが自身のタブIDを認識して正しく初期表示します。<br>例: <code>https://example.com/?tab=foo&tab=bar</code></p>
+
+          <h3 class="text-2xl font-bold mt-8 mb-4">URLの更新</h3>
+          <p class="text-gray-600"><strong><code class="text-sm bg-gray-200 p-1 rounded">updateUrl: true</code></strong>: このオプションを設定すると、ユーザーがタブを切り替えるたびにURLのクエリパラメータが自動的に更新されます。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Reference Section -->
+    <section id="api" class="py-16">
+      <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-5xl">
+          <h2 class="text-3xl font-bold text-center mb-12">APIリファレンス</h2>
+          
+          <h3 class="text-2xl font-bold mt-8 mb-4">Options</h3>
+          <p class="text-gray-600 mb-4"><code>setup()</code> または <code>new AriaTabs()</code> の際に指定できるオプションです。</p>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
+              <thead class="bg-gray-50"><tr class="text-left"><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">オプション名</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">型</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">デフォルト</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 w-2/5">説明</th></tr></thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-4 py-2 font-medium"><code>paramName</code></td><td class="px-4 py-2"><code>String</code></td><td class="px-4 py-2"><code>'tab'</code></td><td class="px-4 py-2">URLパラメータで使用するキー名です。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>toggleMethod</code></td><td class="px-4 py-2"><code>String</code></td><td class="px-4 py-2"><code>'hidden'</code></td><td class="px-4 py-2">非表示パネルの制御方法を指定します。<br>- <code>'hidden'</code>: HTMLの <code>hidden</code> 属性を使用します。<br>- <code>'aria-hidden'</code>: <code>aria-hidden="true"</code> 属性を使用します。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>updateUrl</code></td><td class="px-4 py-2"><code>Boolean</code></td><td class="px-4 py-2"><code>false</code></td><td class="px-4 py-2"><code>true</code> の場合、タブを切り替えるたびにURLのクエリパラメータを更新します。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>callback</code></td><td class="px-4 py-2"><code>Object</code></td><td class="px-4 py-2"><code>{}</code></td><td class="px-4 py-2">コールバック関数を格納するオブジェクトです。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="text-2xl font-bold mt-8 mb-4">Callback</h3>
+          <p class="text-gray-600 mb-4"><code>options.callback</code> オブジェクトに設定できるコールバック関数です。</p>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
+              <thead class="bg-gray-50"><tr class="text-left"><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">プロパティ名</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">引数</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 w-2/5">説明</th></tr></thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-4 py-2 font-medium"><code>onInit</code></td><td class="px-4 py-2"><code>(instance)</code></td><td class="px-4 py-2">インスタンスの初期化が完了したときに実行されます。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>onTabChange</code></td><td class="px-4 py-2"><code>(activatedTab, instance)</code></td><td class="px-4 py-2">タブが切り替わったときに実行されます。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="text-2xl font-bold mt-8 mb-4">Event</h3>
+          <p class="text-gray-600 mb-4"><code>on()</code> メソッドを使用して、特定のイベントを購読できます。インスタンスごと、またはグローバルに登録できます。</p>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
+              <thead class="bg-gray-50"><tr class="text-left"><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">イベント名</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">引数</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 w-2/5">説明</th></tr></thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-4 py-2 font-medium"><code>init</code></td><td class="px-4 py-2"><code>(instance)</code></td><td class="px-4 py-2">インスタンスの初期化が完了したときに発火します。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>tabChange</code></td><td class="px-4 py-2"><code>(activatedTab, instance)</code></td><td class="px-4 py-2">タブが切り替わったときに発火します。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 class="text-xl font-bold mt-6 mb-2">グローバルイベント</h4>
+          <pre class="text-sm"><code class="language-javascript hljs rounded-lg">AriaTabs.on('tabChange', (activatedTab, instance) => {
+  console.log(`Tab changed in ${instance.container.id}:`, activatedTab.id);
+});
+
+AriaTabs.setup();</code></pre>
+
+          <h4 class="text-xl font-bold mt-6 mb-2">インスタンスごとのイベント</h4>
+          <pre class="text-sm"><code class="language-javascript hljs rounded-lg">const collection = AriaTabs.setup();
+
+// 特定のインスタンスに対してイベントを登録
+const instance = collection[0];
+instance.on('tabChange', (tab) => console.log('First instance tab changed to:', tab.id));
+
+// setup()が返すコレクションに対しても一括で登録可能
+collection.on('init', (instance) => console.log(instance.container.id, 'initialized.'));</code></pre>
+          <p class="mt-4 text-gray-600 p-4 bg-yellow-50 border-l-4 border-yellow-400"><strong>注意</strong>: <code>init</code> イベントは <code>setup()</code> より前に書く必要があります。<code>setup()</code> が終わった時にはすでに初期化が終了しているためイベントは実行されません。</p>
+
+          <h3 class="text-2xl font-bold mt-8 mb-4">静的メソッド (Static Methods)</h3>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
+              <thead class="bg-gray-50"><tr class="text-left"><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">メソッド</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 w-3/5">説明</th></tr></thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-4 py-2 font-medium"><code>AriaTabs.setup(selector, options)</code></td><td class="px-4 py-2">指定されたセレクタに一致する全てのコンポーネントを初期化します。返り値は、全インスタンスを含む配列に、後述のCollection APIが追加されたものです。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>AriaTabs.switchTo(tabId)</code></td><td class="px-4 py-2">いずれかのインスタンスに属するタブIDを指定して、そのタブをアクティブにします。対象インスタンスは自動で特定されます。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>AriaTabs.getInstance(idOrEl)</code></td><td class="px-4 py-2">コンテナ要素またはタブIDなどの子孫要素から、関連付けられた<code>AriaTabs</code>インスタンスを取得します。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>AriaTabs.on(event, callback)</code></td><td class="px-4 py-2">グローバルなイベントリスナーを登録します。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="text-2xl font-bold mt-8 mb-4">インスタンスメソッド (Instance Methods)</h3>
+          <p class="text-gray-600 mb-4"><code>new AriaTabs()</code> または <code>AriaTabs.getInstance()</code> で取得したインスタンスから呼び出せます。 (個別操作)</p>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
+              <thead class="bg-gray-50"><tr class="text-left"><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">メソッド</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 w-3/5">説明</th></tr></thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-4 py-2 font-medium"><code>instance.activate(tabId, options)</code></td><td class="px-4 py-2">インスタンス内の指定IDのタブをアクティブにします。<br><code>{ silent: true }</code> オプションを渡すと、URL更新や <code>tabChange</code> イベントの発火を抑制できます。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>instance.destroy()</code></td><td class="px-4 py-2">インスタンスを破棄し、イベントリスナーや内部参照をクリーンアップします。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>instance.on(event, callback)</code></td><td class="px-4 py-2">インスタンス固有のイベントリスナーを登録します。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <h3 class="text-2xl font-bold mt-8 mb-4">Collection API</h3>
+          <p class="text-gray-600 mb-4"><code>AriaTabs.setup()</code> の返り値（インスタンスの配列）に対して使用できる便利なメソッド群です。 (一括操作)</p>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
+              <thead class="bg-gray-50"><tr class="text-left"><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">メソッド</th><th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 w-3/5">説明</th></tr></thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-4 py-2 font-medium"><code>collection.on(event, callback)</code></td><td class="px-4 py-2">コレクション内の<strong>すべてのインスタンス</strong>にイベントリスナーを一括で登録します。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>collection.switchTo(tabId)</code></td><td class="px-4 py-2"><code>AriaTabs.switchTo(tabId)</code> と同じです。いずれかのインスタンスが持つタブを有効化します。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>collection.getInstance(idOrEl)</code></td><td class="px-4 py-2"><code>AriaTabs.getInstance(idOrEl)</code> と同じです。</td></tr>
+                <tr><td class="px-4 py-2 font-medium"><code>collection.destroy()</code></td><td class="px-4 py-2">コレクション内の<strong>すべてのインスタンス</strong>を破棄します。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h4 class="text-xl font-bold mt-6 mb-2">例</h4>
+          <pre class="text-sm"><code class="language-javascript hljs rounded-lg">const tabCollection = AriaTabs.setup();
+
+// 'tab-2' というIDを持つタブをアクティブにする
+tabCollection.switchTo('tab-2');
+
+// すべてのインスタンスが破棄される
+tabCollection.destroy(); </code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-100">
+    <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">
+      <div class="sm:flex sm:items-center sm:justify-between">
+        <div class="flex justify-center text-teal-600 sm:justify-start">
+          <h1 class="text-xl font-bold text-gray-900 sm:text-2xl">aria-tabs.js</h1>
+        </div>
+        <p class="mt-4 text-center text-sm text-gray-500 lg:mt-0 lg:text-right">
+          &copy; 2026 nodaakari. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./src/aria-tabs.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      AriaTabs.setup('.js-tab-container');
+      hljs.highlightAll();
+    });
+  </script>
+</body>
+</html>
