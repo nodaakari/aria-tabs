@@ -1,26 +1,29 @@
 /**
- * AriaTabs
+ * AriaTabs - アクセシビリティ対応タブライブラリ
  * @version 1.0.0
- * @license MIT
  */
 class AriaTabs {
   // インスタンス管理用レジストリ
   static #instances = new WeakMap();
+  static #globalListeners = { init: [], tabChange: [] };
+
+  // グローバルイベント登録
+  static on(event, callback) {
+    if (this.#globalListeners[event]) this.#globalListeners[event].push(callback);
+    return this;
+  }
 
   /**
    * @param {HTMLElement|string} target - コンテナ要素 または セレクタ文字列
    * @param {Object} options - 設定オプション
    */
   constructor(target, options = {}) {
-    // 引数が文字列なら要素を取得、要素ならそのまま保持
     this.container = typeof target === 'string' ? document.querySelector(target) : target;
-    
     if (!this.container) {
       console.warn('AriaTabs: ターゲットとなる要素が見つかりません。', target);
       return;
     }
 
-    // セレクタの自動決定：文字列が渡されていればそれを、なければデフォルトを採用
     const defaultSelector = typeof target === 'string' ? target : '.js-tab-container';
 
     this.options = {
@@ -30,13 +33,13 @@ class AriaTabs {
       updateUrl: false,
       ...options,
       callback: {
-        onTabChange: null,
         onInit: null,
+        onTabChange: null,
         ...(options.callback || {})
       }
     };
 
-    // 内部要素の抽出
+    this._listeners = { init: [], tabChange: [] };
     this.tabs = this._getOwnElements('[role="tab"]');
     this.panels = this._getOwnElements('[role="tabpanel"]');
     this._onTabClickBound = this._handleTabClick.bind(this);
@@ -50,16 +53,14 @@ class AriaTabs {
    * [Static] ページ内のタブを一括セットアップ
    * @param {string} selector - コンテナのセレクタ
    * @param {Object} options - 設定オプション
-   * @returns {Array & {switchTo: Function, activate: Function, getInstance: Function, destroy: Function}}
    */
   static setup(selector = '.js-tab-container', options = {}) {
     const containers = document.querySelectorAll(selector);
-    // selectorをcontainerSelectorとして各インスタンスに強制同期させる
-    const instances = Array.from(containers).map(el => new AriaTabs(el, { ...options, containerSelector: selector }));
+    const mergedOptions = { ...options, containerSelector: selector };
+    const instances = Array.from(containers).map(el => new AriaTabs(el, mergedOptions));
 
-    /** 配列に対する一括操作メソッドの拡張 */
+    instances.on = function(event, callback) { this.forEach(i => i.on(event, callback)); return this; };
     instances.switchTo = function(tabId) { AriaTabs.switchTo(tabId); return this; };
-    instances.activate = function(tabId, opts = {}) { this.forEach(i => i.activate(tabId, opts)); return this; };
     instances.getInstance = function(idOrEl) { return AriaTabs.getInstance(idOrEl); };
     instances.destroy = function() { this.forEach(i => i.destroy()); this.length = 0; };
 
@@ -81,21 +82,37 @@ class AriaTabs {
     if (typeof idOrEl === 'string') {
       const tabEl = document.getElementById(idOrEl);
       if (!tabEl) return undefined;
-      // role="tablist" の親、または一般的なコンテナクラスを辿る
       const container = tabEl.closest('[role="tablist"]')?.parentElement || tabEl.closest('.js-tab-container');
       return AriaTabs.#instances.get(container);
     }
     return AriaTabs.#instances.get(idOrEl);
   }
 
+  on(event, callback) {
+    if (this._listeners[event]) this._listeners[event].push(callback);
+    return this;
+  }
+
+  /**
+   * イベント発火（個別、グローバル、コールバックオプションのすべてを処理）
+   */
+  _trigger(event, data) {
+    this._listeners[event].forEach(cb => cb(data, this));
+    AriaTabs.#globalListeners[event].forEach(cb => cb(data, this));
+    const callbackName = `on${event.charAt(0).toUpperCase() + event.slice(1)}`;
+    const callback = this.options.callback[callbackName];
+    if (typeof callback === 'function') {
+      callback(data, this);
+    }
+  }
+
   // --- 内部ロジック ---
 
   /**
-   * 自分自身の階層にある要素のみをフィルタリング（ネスト対応の核）
+   * 自分自身の階層にある要素のみをフィルタリング
    */
   _getOwnElements(selector) {
     return Array.from(this.container.querySelectorAll(selector)).filter(el => {
-      // 自身に最も近いコンテナが自分自身であれば、それは「自分の持ち物」とみなす
       return el.closest(this.options.containerSelector) === this.container;
     });
   }
@@ -105,21 +122,16 @@ class AriaTabs {
    */
   _init() {
     if (!this.tabs.length) return;
-    
-    // 全ての tablist を取得してイベント登録
+
     this.tabLists = Array.from(this.container.querySelectorAll('[role="tablist"]')).filter(el => {
       return el.closest(this.options.containerSelector) === this.container;
     });
-
-    this.tabLists.forEach(list => {
-      list.addEventListener('click', this._onTabClickBound);
-    });
+    this.tabLists.forEach(list => list.addEventListener('click', this._onTabClickBound));
     
     this.activate(this._getInitialTabId(), { silent: true });
 
-    if (typeof this.options.callback.onInit === 'function') {
-      this.options.callback.onInit(this);
-    }
+    // init イベントと onInit コールバックを発火
+    this._trigger('init', this);
   }
 
   /**
@@ -137,29 +149,27 @@ class AriaTabs {
    * アクティブ化処理（UI更新、URL同期、コールバック）
    */
   activate(tabId, { silent = false } = {}) {
-    // 起点となるタブを探す
     const triggerTab = this.tabs.find(tab => tab.id === tabId) || this.tabs[0];
     if (!triggerTab) return;
     
-    // 紐づいているパネルIDを取得（これが連動のキーになる）
     const targetPanelId = triggerTab.getAttribute('aria-controls');
 
-    // 同じパネルIDを持つ全てのタブをアクティブにする
     this.tabs.forEach(tab => {
       const isMatch = tab.getAttribute('aria-controls') === targetPanelId;
       tab.setAttribute('aria-selected', String(isMatch));
       tab.tabIndex = isMatch ? 0 : -1;
     });
 
-    // パネルの表示切り替え
     this.panels.forEach(panel => {
       const isVisible = panel.id === targetPanelId;
       this._togglePanel(panel, isVisible);
     });
 
     if (!silent && this.options.updateUrl) this._reflectUrl(triggerTab.id);
-    if (!silent && typeof this.options.callback.onTabChange === 'function') {
-      this.options.callback.onTabChange(triggerTab);
+
+    // tabChange イベントと onTabChange コールバックを発火
+    if (!silent) {
+      this._trigger('tabChange', triggerTab);
     }
   }
 
@@ -170,11 +180,9 @@ class AriaTabs {
     const url = new URL(window.location.href);
     const params = url.searchParams;
     const otherInstanceParams = params.getAll(this.options.paramName).filter(id => !this.tabs.some(t => t.id === id));
-    
     params.delete(this.options.paramName);
     otherInstanceParams.forEach(id => params.append(this.options.paramName, id));
     params.append(this.options.paramName, tabId);
-
     window.history.replaceState(null, '', url.toString());
   }
 
@@ -207,9 +215,7 @@ class AriaTabs {
    * インスタンスの破棄
    */
   destroy() {
-    this.tabLists.forEach(list => {
-      list.removeEventListener('click', this._onTabClickBound);
-    });
+    this.tabLists.forEach(list => list.removeEventListener('click', this._onTabClickBound));
     AriaTabs.#instances.delete(this.container);
     this.container = null;
     this.tabs = [];

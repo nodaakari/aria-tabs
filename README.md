@@ -2,11 +2,28 @@
 
 WAI-ARIA仕様に準拠した、アクセシブルなタブコンポーネントを実装するための軽量なJavaScriptライブラリです。
 
-**特徴**
-- **アクセシビリティ**: WAI-ARIAの仕様（`role`, `aria-selected`, `aria-controls`等）に沿った属性管理を自動で行います。
-- **ネスト対応**: タブコンポーネントを入れ子にしても、各階層がイベントの伝播を制御し、完全に独立して動作します。
-- **高度なURL連携**: URLのクエリパラメータを読み取って初期タブを表示します。複数のタブコンポーネントが同じパラメータ名を共有していても、それぞれの状態を正しく解決・反映できます。
-- **便利なAPI**: `setup`メソッドでページ内の全タブを一括初期化したり、`switchTo`メソッドでインスタンスを意識せずにタブを切り替えたりできます。
+---
+
+## 特徴
+
+### アクセシビリティ
+
+WAI-ARIAの仕様（`role`, `aria-selected`, `aria-controls`等）に沿った属性管理を自動で行います。
+
+### ネスト & 複数ボタン連動に対応
+
+- タブコンポーネントを入れ子にしても、各階層がイベントの伝播を制御し、完全に独立して動作します。
+- 同じパネルID（`aria-controls`）を持つボタンすべてを一括で制御できます。
+
+### URLパラメータ連携
+
+- URLのクエリパラメータを読み取って初期タブを表示します。
+- タブ切り替えに連動してURLのクエリパラメータを更新できます。
+
+### 便利なAPI
+
+- `setup()`メソッドでページ内の全タブを一括初期化できます。
+- EventやCallback機能で柔軟な制御が可能です。
 
 ---
 
@@ -17,7 +34,7 @@ WAI-ARIA仕様に準拠した、アクセシブルなタブコンポーネント
 - タブのリスト全体を `role="tablist"` を持つ要素で囲みます。
 - 各タブ要素に `role="tab"` と `id` を指定し、対応するパネルのIDを `aria-controls` 属性に指定します。
 - 各パネル要素に `role="tabpanel"` と `id` を指定します。
-- これら全体を囲むコンテナ要素に、JavaScriptが初期化の起点として使用するクラス（例: `.js-tab-container`）を付与します。
+- これら全体を囲むコンテナ要素に、JavaScriptが初期化の起点として使用するクラス（デフォルト: `.js-tab-container`）を付与します。
 
 ```html
 <div class="js-tab-container">
@@ -66,8 +83,10 @@ const myTab = AriaTabs.setup();
 AriaTabs.setup('.my-custom-tabs', {
   updateUrl: true,
   toggleMethod: 'aria-hidden',
-  onTabChange: (activatedTab) => {
-    console.log(`Activated: ${activatedTab.id}`);
+  callback: {
+    onTabChange: (activatedTab) => {
+      console.log(`Activated: ${activatedTab.id}`);
+    }
   }
 });
 ```
@@ -76,20 +95,23 @@ AriaTabs.setup('.my-custom-tabs', {
 
 ## URLパラメータ連携
 
-ページ読み込み時に特定のタブを開いたり、現在のタブ状態をURLに反映させたりする機能です。
+ページ読み込み時に特定のタブを開いたり、現在のタブ状態をURLに反映させたりする機能です。（例: `?tab=tab-2`）
 
-### 初期表示
+### 初期表示の優先順位
 
-- **優先順位**: ページロード時、以下の優先順位で表示するタブを決定します。
-    1.  URLのクエリパラメータ（例: `?tab=tab-2`）
-    2.  HTMLで `aria-selected="true"` が設定されたタブ
-    3.  （上記いずれもない場合）最初のタブ
-- **複数コンポーネントの共存**: ページ内に複数のタブコンポーネントが存在し、URLパラメータ（例: `?tab=foo&tab=bar`）にそれぞれのタブIDが含まれている場合でも、各コンポーネントが自身のタブIDを認識して正しく初期表示します。
+ページロード時、以下の優先順位で表示するタブを決定します。
+
+1.  URLのクエリパラメータ
+2.  HTMLで `aria-selected="true"` が設定されたタブ
+3.  （上記いずれもない場合）最初のタブ
+
+**複数コンポーネントの共存**: ページ内に複数のタブコンポーネントが存在し、URLパラメータにそれぞれのタブIDが含まれている場合でも、各コンポーネントが自身のタブIDを認識して正しく初期表示します。
+
+例: `https://example.com/?tab=foo&tab=bar`
 
 ### URLの更新
 
-- **`updateUrl: true`**: このオプションを設定すると、ユーザーがタブを切り替えるたびにURLのクエリパラメータが自動的に更新されます（`history.replaceState`を使用）。
-- **パラメータの共存**: この更新処理は非常に洗練されています。ページ内に同じ `paramName` を使う他のタブコンポーネントが存在する場合でも、そのコンポーネントが管理するパラメータを維持したまま、現在のタブ状態のみをURLに反映します。
+- **`updateUrl: true`**: このオプションを設定すると、ユーザーがタブを切り替えるたびにURLのクエリパラメータが自動的に更新されます。
 
 ---
 
@@ -97,67 +119,125 @@ AriaTabs.setup('.my-custom-tabs', {
 
 ### Options
 
-`setup` または `new AriaTabs()` の際に指定できるオプションです。
+`setup()` または `new AriaTabs()` の際に指定できるオプションです。
 
 | オプション名 | 型 | デフォルト | 説明 |
 | :--- | :--- | :--- | :--- |
 | `paramName` | `String` | `'tab'` | URLパラメータで使用するキー名です。 |
-| `toggleMethod` | `String` | `'hidden'` | 非表示パネルの制御方法を指定します。<br>- `'hidden'`: HTMLの `hidden` 属性を使用します。<br>- `'aria-hidden'`: `aria-hidden="true"` 属性を使用します。この場合、`[aria-hidden="true"] { display: none; }` のようなCSSが別途必要です。 |
+| `toggleMethod` | `String` | `'hidden'` | 非表示パネルの制御方法を指定します。<br>- `'hidden'`: HTMLの `hidden` 属性を使用します。<br>- `'aria-hidden'`: `aria-hidden="true"` 属性を使用します。 |
 | `updateUrl` | `Boolean` | `false` | `true` の場合、タブを切り替えるたびにURLのクエリパラメータを更新します。 |
-| `onTabChange` | `Function` | `null` | タブが切り替わるたびに実行されるコールバック関数です。<br>引数として、アクティブになったタブのDOM要素を受け取ります。 |
+| `callback` | `Object` | `{}` | コールバック関数を格納するオブジェクトです。詳細は`Callback`セクションを参照してください。 |
+
+### Callback
+
+`options.callback` オブジェクトに設定できるコールバック関数です。
+
+| プロパティ名 | 引数 | 説明 |
+| :--- | :--- | :--- |
+| `onInit` | `(instance)` | インスタンスの初期化が完了したときに実行されます。 |
+| `onTabChange` | `(activatedTab, instance)` | タブが切り替わったときに実行されます。 |
+
+### Event
+
+`on()` メソッドを使用して、特定のイベントを購読できます。インスタンスごと、またはグローバルに登録できます。
+
+| イベント名 | 引数 | 説明 |
+| :--- | :--- | :--- |
+| `init` | `(instance)` | インスタンスの初期化が完了したときに発火します。 |
+| `tabChange` | `(activatedTab, instance)` | タブが切り替わったときに発火します。 |
+
+#### グローバルイベント
+
+```javascript
+// すべてのインスタンスでタブが切り替わるたびに実行
+AriaTabs.on('tabChange', (activatedTab, instance) => {
+  console.log(`Tab changed in ${instance.container.id}:`, activatedTab.id);
+});
+
+AriaTabs.setup();
+```
+
+#### インスタンスごとのイベント
+
+```javascript
+const collection = AriaTabs.setup();
+
+// 特定のインスタンスに対してイベントを登録
+const instance = collection[0];
+instance.on('tabChange', (tab) => console.log('First instance tab changed to:', tab.id));
+
+// setup()が返すコレクションに対しても一括で登録可能
+collection.on('init', (instance) => console.log(instance.container.id, 'initialized.'));
+```
+
+- **注意**: `init` イベントは `setup()` より前に書く必要があります。`setup()` が終わった時にはすでに初期化が終了しているためイベントは実行されません。
+
 
 ### 静的メソッド (Static Methods)
 
 | メソッド | 説明 |
 | :--- | :--- |
 | `AriaTabs.setup(selector, options)` | 指定されたセレクタに一致する全てのコンポーネントを初期化します。返り値は、全インスタンスを含む配列に、後述のCollection APIが追加されたものです。 |
-| `AriaTabs.getInstance(elementOrId)` | コンテナ要素またはタブIDから、関連付けられた`AriaTabs`インスタンスを取得します。 |
-
-#### 例
-
-```javascript
-AriaTabs.setup('.my-custom-tabs');
-```
+| `AriaTabs.switchTo(tabId)` | いずれかのインスタンスに属するタブIDを指定して、そのタブをアクティブにします。対象インスタンスは自動で特定されます。 |
+| `AriaTabs.getInstance(idOrEl)` | コンテナ要素またはタブIDなどの子孫要素から、関連付けられた`AriaTabs`インスタンスを取得します。 |
+| `AriaTabs.on(event, callback)` | グローバルなイベントリスナーを登録します。 |
 
 ### インスタンスメソッド (Instance Methods)
 
-`new AriaTabs()` または `AriaTabs.getInstance()` で取得したインスタンスから呼び出せます。
+`new AriaTabs()` または `AriaTabs.getInstance()` で取得したインスタンスから呼び出せます。 (個別操作)
 
 | メソッド | 説明 |
 | :--- | :--- |
-| `AriaTabs.activate(tabId, options)` | インスタンス内の指定IDのタブをアクティブにします。<br>`{ silent: true }` オプションでURL更新やコールバックを抑制できます。|
+| `instance.activate(tabId, options)` | インスタンス内の指定IDのタブをアクティブにします。<br>`{ silent: true }` オプションを渡すと、URL更新や `tabChange` イベントの発火を抑制できます。|
 | `instance.destroy()` | インスタンスを破棄し、イベントリスナーや内部参照をクリーンアップします。|
-
-#### 例
-
-```javascript
-const myInstance = AriaTabs.getInstance('my-tabs-id');
-
-// 'myInstance' を破棄する
-myInstance.destroy(); 
-```
+| `instance.on(event, callback)` | インスタンス固有のイベントリスナーを登録します。 |
 
 ### Collection API
 
-`AriaTabs.setup()` の返り値に対して使用できる便利なメソッド群です。
+`AriaTabs.setup()` の返り値（インスタンスの配列）に対して使用できる便利なメソッド群です。 (一括操作)
 
 | メソッド | 説明 |
 | :--- | :--- |
-| `collection.switchTo(tabId)` | `AriaTabs.switchTo(tabId)` と同じです。コレクション内のいずれかのインスタンスが持つタブを有効化します。 |
-| `collection.activate(tabId, opts)` | コレクション内の**すべてのインスタンス**に対して `activate` メソッドを実行します。 |
+| `collection.on(event, callback)` | コレクション内の**すべてのインスタンス**にイベントリスナーを一括で登録します。 |
+| `collection.switchTo(tabId)` | `AriaTabs.switchTo(tabId)` と同じです。いずれかのインスタンスが持つタブを有効化します。 |
 | `collection.getInstance(idOrEl)` | `AriaTabs.getInstance(idOrEl)` と同じです。 |
 | `collection.destroy()` | コレクション内の**すべてのインスタンス**を破棄します。 |
 
 #### 例
 
 ```javascript
-const tabCollections = AriaTabs.setup();
+const tabCollection = AriaTabs.setup();
 
 // 'tab-2' というIDを持つタブをアクティブにする
-tabCollections.switchTo('tab-2');
+tabCollection.switchTo('tab-2');
 
-// 'tabCollections' を破棄する
-tabCollections.destroy(); 
+// すべてのインスタンスが破棄される
+tabCollection.destroy(); 
+```
+
+---
+
+## aria-hidden
+
+`toggleMethod: 'aria-hidden'` を使う場合は、CSSの記述を忘れないようにしてください。
+
+**例**
+```css
+/* aria-hidden="true" のパネルを物理的に非表示にする */
+.my-custom-tabs [role="tabpanel"][aria-hidden="true"] {
+  display: none;
+}
+
+/* 任意：表示時のアニメーション */
+.my-custom-tabs [role="tabpanel"][aria-hidden="false"] {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 ```
 
 ---
@@ -204,28 +284,23 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 ```
 
+### 上下にあるタブが連動する例
 
-### aria-hiddenとアニメーション
+```html
+<div class="js-tab-container">
+  <div role="tablist">
+    <button id="tab-1-top" role="tab" aria-controls="panel-1" aria-selected="true">地域から探す</button>
+    <button id="tab-2-top" role="tab" aria-controls="panel-2">条件から探す</button>
+  </div>
 
-`toggleMethod: 'aria-hidden'` を使う場合は、CSSの記述を忘れないようにしてください。
+  <div id="panel-1" role="tabpanel">地域パネルの内容</div>
+  <div id="panel-2" role="tabpanel" hidden>条件パネルの内容</div>
 
-**例**
-```CSS
-/* aria-hidden="true" のパネルを物理的に非表示にする */
-.my-custom-tabs [role="tabpanel"][aria-hidden="true"] {
-  display: none;
-}
-
-/* 任意：表示時のアニメーション */
-.my-custom-tabs [role="tabpanel"][aria-hidden="false"] {
-  display: block;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+  <div role="tablist">
+    <button id="tab-1-bottom" role="tab" aria-controls="panel-1">地域から探す</button>
+    <button id="tab-2-bottom" role="tab" aria-controls="panel-2">条件から探す</button>
+  </div>
+</div>
 ```
 
 ---
