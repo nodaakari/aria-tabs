@@ -21,23 +21,26 @@ class AriaTabs {
     }
 
     // セレクタの自動決定：文字列が渡されていればそれを、なければデフォルトを採用
-    // これにより「containerSelector」を別途指定する手間を省く
     const defaultSelector = typeof target === 'string' ? target : '.js-tab-container';
 
     this.options = {
       containerSelector: defaultSelector,
       paramName: 'tab',
-      toggleMethod: 'hidden', // 'hidden' または 'aria-hidden'
+      toggleMethod: 'hidden',
       updateUrl: false,
-      onTabChange: null,
-      ...options
+      ...options,
+      callback: {
+        onTabChange: null,
+        onInit: null,
+        ...(options.callback || {})
+      }
     };
 
     // 内部要素の抽出
     this.tabs = this._getOwnElements('[role="tab"]');
     this.panels = this._getOwnElements('[role="tabpanel"]');
     this._onTabClickBound = this._handleTabClick.bind(this);
-    this.tabList = null;
+    this.tabLists = [];
 
     AriaTabs.#instances.set(this.container, this);
     this._init();
@@ -102,10 +105,21 @@ class AriaTabs {
    */
   _init() {
     if (!this.tabs.length) return;
-    this.tabList = Array.from(this.container.querySelectorAll('[role="tablist"]'))
-                         .find(el => el.closest(this.options.containerSelector) === this.container);
-    this.tabList?.addEventListener('click', this._onTabClickBound);
+    
+    // 全ての tablist を取得してイベント登録
+    this.tabLists = Array.from(this.container.querySelectorAll('[role="tablist"]')).filter(el => {
+      return el.closest(this.options.containerSelector) === this.container;
+    });
+
+    this.tabLists.forEach(list => {
+      list.addEventListener('click', this._onTabClickBound);
+    });
+    
     this.activate(this._getInitialTabId(), { silent: true });
+
+    if (typeof this.options.callback.onInit === 'function') {
+      this.options.callback.onInit(this);
+    }
   }
 
   /**
@@ -123,24 +137,30 @@ class AriaTabs {
    * アクティブ化処理（UI更新、URL同期、コールバック）
    */
   activate(tabId, { silent = false } = {}) {
-    const targetTab = this.tabs.find(tab => tab.id === tabId) || this.tabs[0];
-    if (!targetTab) return;
+    // 起点となるタブを探す
+    const triggerTab = this.tabs.find(tab => tab.id === tabId) || this.tabs[0];
+    if (!triggerTab) return;
     
-    const targetPanelId = targetTab.getAttribute('aria-controls');
+    // 紐づいているパネルIDを取得（これが連動のキーになる）
+    const targetPanelId = triggerTab.getAttribute('aria-controls');
 
+    // 同じパネルIDを持つ全てのタブをアクティブにする
     this.tabs.forEach(tab => {
-      const isSelected = tab === targetTab;
-      tab.setAttribute('aria-selected', String(isSelected));
-      tab.tabIndex = isSelected ? 0 : -1;
+      const isMatch = tab.getAttribute('aria-controls') === targetPanelId;
+      tab.setAttribute('aria-selected', String(isMatch));
+      tab.tabIndex = isMatch ? 0 : -1;
     });
 
+    // パネルの表示切り替え
     this.panels.forEach(panel => {
       const isVisible = panel.id === targetPanelId;
       this._togglePanel(panel, isVisible);
     });
 
-    if (!silent && this.options.updateUrl) this._reflectUrl(targetTab.id);
-    if (!silent && typeof this.options.onTabChange === 'function') this.options.onTabChange(targetTab);
+    if (!silent && this.options.updateUrl) this._reflectUrl(triggerTab.id);
+    if (!silent && typeof this.options.callback.onTabChange === 'function') {
+      this.options.callback.onTabChange(triggerTab);
+    }
   }
 
   /**
@@ -187,10 +207,13 @@ class AriaTabs {
    * インスタンスの破棄
    */
   destroy() {
-    if (this.tabList) this.tabList.removeEventListener('click', this._onTabClickBound);
+    this.tabLists.forEach(list => {
+      list.removeEventListener('click', this._onTabClickBound);
+    });
     AriaTabs.#instances.delete(this.container);
     this.container = null;
     this.tabs = [];
     this.panels = [];
+    this.tabLists = [];
   }
 }
