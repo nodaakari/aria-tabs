@@ -2,6 +2,8 @@
 
 WAI-ARIA仕様に準拠した、アクセシブルなタブコンポーネントを実装するための軽量なJavaScriptライブラリです。
 
+[https://nodaakari.github.io/aria-tabs/](https://nodaakari.github.io/aria-tabs/)
+
 ---
 
 ## 特徴
